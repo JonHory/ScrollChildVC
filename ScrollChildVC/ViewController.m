@@ -86,15 +86,18 @@ static CGFloat const MIXTOPVIEWS = 5;
     [self.vcsData addObject:second];
     [self.vcsData addObject:third];
     
-    for (int i = 0; i<self.vcsData.count; i++) {
-        UIViewController * vc = self.vcsData[i];
-        vc.view.frame = CGRectMake(i*SCREEN.width, 0, SCREEN.width, CGRectGetHeight(_vcsScroll.frame));
-        vc.view.backgroundColor = [UIColor randomColor];
-        [self addChildViewController:vc];
-        [self.vcsScroll addSubview:vc.view];
-    }
+//    for (int i = 0; i<self.vcsData.count; i++) {
+//        UIViewController * vc = self.vcsData[i];
+//        vc.view.frame = CGRectMake(i*SCREEN.width, 0, SCREEN.width, CGRectGetHeight(_vcsScroll.frame));
+//        vc.view.backgroundColor = [UIColor randomColor];
+//        [self addChildViewController:vc];
+//        [self.vcsScroll addSubview:vc.view];
+//    }
     
-    [second setScrollFrame:second.view.frame];
+//    [second setScrollFrame:second.view.frame];
+    first.view.frame = CGRectMake(0, 0, SCREEN.width, CGRectGetHeight(_vcsScroll.frame));
+    [self addChildViewController:first];
+    [self.vcsScroll addSubview:first.view];
     
     self.vcsScroll.contentSize = CGSizeMake(self.vcsData.count * SCREEN.width, 0);
     
