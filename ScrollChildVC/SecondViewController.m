@@ -30,6 +30,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    NSLog(@"%@加载完毕",[self description]);
+    
     [self.view addSubview:self.scroll];
     
     UIView * vv = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 100, 50)];

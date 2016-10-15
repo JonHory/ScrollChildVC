@@ -27,15 +27,38 @@ static CGFloat const MIXTOPVIEWS = 5;
 
 @interface ViewController ()<UIScrollViewDelegate>
 
-@property (nonatomic ,strong) UIScrollView * topScroll;
-@property (nonatomic ,strong) UIScrollView * vcsScroll;
+@property (nonatomic ,strong) UIScrollView * topScroll;/**< 顶部滑动视图 */
+@property (nonatomic ,strong) UIScrollView * vcsScroll;/**< vc.view的滑动视图 */
 
-@property (nonatomic ,strong) NSMutableArray * vcsData;
-@property (nonatomic ,strong) UIView * redView;
+@property (nonatomic ,strong) NSMutableArray * vcsData;/**< 用于装所有vc的数组 */
+@property (nonatomic ,strong) UIView * redView;/**< 小滑动块 */
 
+@property (nonatomic ,strong) UIView * secondView;/**< 为了懒加载 */
+@property (nonatomic ,strong) UIView * thirdView;/**< 为了懒加载 */
+
+@property (nonatomic ,assign) CGFloat currentOffsetX;/**< 滑动结束时的偏移量，用来控制vc的ScrollView是否滑动到顶部 */
 @end
 
 @implementation ViewController
+
+- (UIView *)secondView{
+    if (!_secondView) {
+        SecondViewController * vc = (SecondViewController *)self.vcsData[1];
+        _secondView = vc.view;
+        _secondView.frame = CGRectMake(SCREEN.width, 0, SCREEN.width, _vcsScroll.bounds.size.height);
+        [vc setScrollFrame:_secondView.frame];
+    }
+    return _secondView;
+}
+
+- (UIView *)thirdView{
+    if (!_thirdView) {
+        UIViewController * vc = self.vcsData[2];
+        _thirdView = vc.view;
+        _thirdView.frame = CGRectMake(SCREEN.width * 2, 0, SCREEN.width, _vcsScroll.bounds.size.height);
+    }
+    return _thirdView;
+}
 
 - (UIView *)redView{
     if (!_redView) {
@@ -97,6 +120,8 @@ static CGFloat const MIXTOPVIEWS = 5;
 //    [second setScrollFrame:second.view.frame];
     first.view.frame = CGRectMake(0, 0, SCREEN.width, CGRectGetHeight(_vcsScroll.frame));
     [self addChildViewController:first];
+    [self addChildViewController:second];
+    [self addChildViewController:third];
     [self.vcsScroll addSubview:first.view];
     
     self.vcsScroll.contentSize = CGSizeMake(self.vcsData.count * SCREEN.width, 0);
@@ -114,16 +139,92 @@ static CGFloat const MIXTOPVIEWS = 5;
     // Do any additional setup after loading the view, typically from a nib.
 }
 
+#pragma mark - UIScrollViewDelegate
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView{
+    if (scrollView == _vcsScroll) {
+        self.currentOffsetX = scrollView.contentOffset.x;
+    }
+}
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView{
     CGFloat offsetX = scrollView.contentOffset.x;
     
     if (scrollView == _vcsScroll) {
+        //懒加载视图
+        int page = offsetX/SCREEN.width;
+        switch (page) {
+            case 1:{
+                [self.vcsScroll addSubview:self.secondView];
+                break;
+            }
+            case 2:{
+                [self.vcsScroll addSubview:self.thirdView];
+                break;
+            }
+            default:
+                break;
+        }
+        
+        //移动小滑块
         CGRect f = _redView.frame;
         f.origin.x = offsetX/SCREEN.width * f.size.width;
         _redView.frame = f;
     }
 }
 
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView{
+    if (scrollView == _vcsScroll) {
+        CGFloat offsetX = scrollView.contentOffset.x;
+        if (self.currentOffsetX == offsetX) {
+            return;
+        }
+        int page = offsetX/SCREEN.width;
+        switch (page) {
+            case 1:{
+                NSLog(@"滑动结束时Second视图的ScrollView滑动到顶部");
+                SecondViewController * vc = self.vcsData[1];
+                [vc.scroll setContentOffset:CGPointMake(0, 0) animated:YES];
+                break;
+            }
+            case 2:{
+                [self.vcsScroll addSubview:self.thirdView];
+                break;
+            }
+            default:
+                break;
+        }
+
+    }
+}
+
+#warning 点击事件中使用setContentOffset:animated方法，不会触发scrollViewDidEndDecelerating:,所以需要在这个方法里面处理SecondVC的UIScrollView滑动到顶部
+- (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView{
+    NSLog(@"动画结束");
+    if (scrollView == _vcsScroll) {
+        CGFloat offsetX = scrollView.contentOffset.x;
+        if (self.currentOffsetX == offsetX) {
+            return;
+        }
+        self.currentOffsetX = offsetX;
+        int page = offsetX/SCREEN.width;
+        switch (page) {
+            case 1:{
+                NSLog(@"滑动结束时Second视图的ScrollView滑动到顶部");
+                SecondViewController * vc = self.vcsData[1];
+                [vc.scroll setContentOffset:CGPointMake(0, 0) animated:YES];
+                break;
+            }
+            case 2:{
+                [self.vcsScroll addSubview:self.thirdView];
+                break;
+            }
+            default:
+                break;
+        }
+        
+    }
+}
+
+#pragma mark - Touch Events
 - (void)btnClick:(UIButton *)btn{
     NSLog(@"%zi",btn.tag);
     switch (btn.tag) {
